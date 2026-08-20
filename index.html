@@ -1,272 +1,460 @@
 ```html
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>سامانه پایش و پیش‌بینی خطر حریق استان فارس</title>
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        سامانه پایش و پیش‌بینی خطر حریق استان فارس
+    </title>
+
+
+    <!-- Leaflet -->
 
     <link
         rel="stylesheet"
         href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
     >
 
-    <!-- Turf برای Clip کردن لایه‌های GeoJSON -->
-    <script src="https://cdn.jsdelivr.net/npm/@turf/turf@7/turf.min.js"></script>
+
+    <!-- Turf -->
+
+    <script
+        src="https://unpkg.com/@turf/turf@6/turf.min.js">
+    </script>
+
+
+    <!-- WMS Crop -->
+
+    <script
+        src="https://cdn.jsdelivr.net/gh/amanchry/leaflet-wms-crop@latest/leaflet-wms-crop.js">
+    </script>
+
 
     <style>
 
         @font-face {
-            font-family: "BNazanin";
-            src: local("B Nazanin");
+
+            font-family:
+                "BNazanin";
+
+            src:
+                local("B Nazanin");
+
         }
 
+
         * {
-            box-sizing: border-box;
+
+            box-sizing:
+                border-box;
+
         }
+
 
         html,
         body {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-            font-family: "BNazanin", Tahoma, Arial, sans-serif;
-            background: #f3f3f3;
+
+            margin:
+                0;
+
+            padding:
+                0;
+
+            width:
+                100%;
+
+            height:
+                100%;
+
+            font-family:
+                "BNazanin",
+                Tahoma,
+                Arial,
+                sans-serif;
+
+            background:
+                #f3f3f3;
+
         }
+
 
         body {
-            overflow: hidden;
+
+            overflow:
+                hidden;
+
         }
 
-        /* ==============================
+
+        /* =========================
            HEADER
-        ============================== */
+        ========================= */
 
         header {
-            height: 70px;
-            background: #f57c00;
-            color: white;
 
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            height:
+                70px;
 
-            text-align: center;
+            background:
+                #f57c00;
 
-            position: relative;
-            z-index: 3000;
+            color:
+                white;
+
+            display:
+                flex;
+
+            align-items:
+                center;
+
+            justify-content:
+                center;
+
+            text-align:
+                center;
+
+            position:
+                relative;
+
+            z-index:
+                3000;
 
             box-shadow:
-                0 2px 8px rgba(0, 0, 0, 0.22);
+                0 2px 8px
+                rgba(0,0,0,.25);
+
         }
+
 
         header h1 {
-            margin: 0;
-            font-size: 25px;
-            font-weight: bold;
+
+            margin:
+                0;
+
+            font-size:
+                25px;
+
+            font-weight:
+                bold;
+
         }
+
 
         header .subtitle {
-            margin-top: 3px;
-            font-size: 14px;
+
+            margin-top:
+                3px;
+
+            font-size:
+                14px;
+
         }
 
-        /* ==============================
+
+        /* =========================
            MAP
-        ============================== */
+        ========================= */
 
         #map {
-            width: 100%;
-            height: calc(100vh - 70px);
+
+            width:
+                100%;
+
+            height:
+                calc(100vh - 70px);
+
         }
 
-        /* ==============================
+
+        /* =========================
            CONTROL PANEL
-        ============================== */
+        ========================= */
 
         .control-panel {
 
-            position: absolute;
+            position:
+                absolute;
 
-            top: 85px;
-            right: 15px;
+            top:
+                85px;
 
-            z-index: 2500;
+            right:
+                15px;
 
-            width: 245px;
+            z-index:
+                2500;
+
+            width:
+                245px;
 
             background:
-                rgba(255, 255, 255, 0.97);
+                rgba(255,255,255,.97);
 
-            border-radius: 12px;
+            border-radius:
+                12px;
 
-            padding: 14px;
+            padding:
+                14px;
 
             box-shadow:
                 0 3px 14px
-                rgba(0, 0, 0, 0.25);
+                rgba(0,0,0,.25);
+
         }
+
 
         .panel-title {
 
-            font-size: 17px;
+            font-size:
+                17px;
 
-            font-weight: bold;
+            font-weight:
+                bold;
 
-            margin-bottom: 10px;
+            margin-bottom:
+                10px;
 
             border-bottom:
                 1px solid #ddd;
 
-            padding-bottom: 8px;
+            padding-bottom:
+                8px;
+
         }
+
 
         .filter-row {
 
-            display: flex;
+            display:
+                flex;
 
-            align-items: center;
+            align-items:
+                center;
 
-            gap: 8px;
+            gap:
+                8px;
 
-            margin: 10px 0;
+            margin:
+                10px 0;
 
-            font-size: 15px;
+            font-size:
+                15px;
 
-            cursor: pointer;
+            cursor:
+                pointer;
+
         }
+
 
         .filter-row input {
 
-            width: 17px;
-            height: 17px;
+            width:
+                17px;
 
-            cursor: pointer;
+            height:
+                17px;
+
+            cursor:
+                pointer;
+
         }
 
-        /* ==============================
+
+        /* =========================
            LEGEND
-        ============================== */
+        ========================= */
 
         .legend {
 
-            position: absolute;
+            position:
+                absolute;
 
-            top: 85px;
-            left: 15px;
+            top:
+                85px;
 
-            z-index: 2500;
+            left:
+                15px;
+
+            z-index:
+                2500;
 
             background:
-                rgba(255, 255, 255, 0.97);
+                rgba(255,255,255,.97);
 
-            border-radius: 12px;
+            border-radius:
+                12px;
 
-            padding: 13px;
+            padding:
+                13px;
 
-            width: 230px;
+            width:
+                230px;
 
             box-shadow:
                 0 3px 14px
-                rgba(0, 0, 0, 0.25);
+                rgba(0,0,0,.25);
+
         }
+
 
         .legend-title {
 
-            font-weight: bold;
+            font-weight:
+                bold;
 
-            font-size: 17px;
+            font-size:
+                17px;
 
-            margin-bottom: 9px;
+            margin-bottom:
+                9px;
 
             border-bottom:
                 1px solid #ddd;
 
-            padding-bottom: 7px;
+            padding-bottom:
+                7px;
+
         }
+
 
         .legend-row {
 
-            display: flex;
+            display:
+                flex;
 
-            align-items: center;
+            align-items:
+                center;
 
-            margin: 6px 0;
+            margin:
+                6px 0;
 
-            font-size: 14px;
+            font-size:
+                14px;
+
         }
+
 
         .legend-color {
 
-            width: 27px;
-            height: 16px;
+            width:
+                27px;
 
-            margin-left: 8px;
+            height:
+                16px;
 
-            border-radius: 3px;
+            margin-left:
+                8px;
+
+            border-radius:
+                3px;
 
             border:
                 1px solid #999;
+
         }
+
 
         .low {
-            background: #2ca25f;
+
+            background:
+                #2ca25f;
+
         }
+
 
         .moderate {
-            background: #ffff00;
+
+            background:
+                #ffff00;
+
         }
+
 
         .high {
-            background: #ff9900;
+
+            background:
+                #ff9900;
+
         }
+
 
         .very-high {
-            background: #ff0000;
+
+            background:
+                #ff0000;
+
         }
+
 
         .severe {
-            background: #cc00cc;
+
+            background:
+                #cc00cc;
+
         }
+
 
         .very-severe {
-            background: #7a001f;
+
+            background:
+                #7a001f;
+
         }
 
-        /* ==============================
-           FARS BUTTON
-        ============================== */
+
+        /* =========================
+           BUTTON
+        ========================= */
 
         .fars-button {
 
-            position: absolute;
+            position:
+                absolute;
 
-            bottom: 25px;
-            right: 15px;
+            bottom:
+                25px;
 
-            z-index: 2500;
+            right:
+                15px;
 
-            border: none;
+            z-index:
+                2500;
 
-            background: white;
+            border:
+                none;
+
+            background:
+                white;
 
             padding:
                 9px 14px;
 
-            border-radius: 8px;
+            border-radius:
+                8px;
 
-            cursor: pointer;
+            cursor:
+                pointer;
 
-            font-family: inherit;
+            font-family:
+                inherit;
 
-            font-size: 14px;
+            font-size:
+                14px;
 
             box-shadow:
                 0 2px 8px
-                rgba(0, 0, 0, 0.25);
+                rgba(0,0,0,.25);
+
         }
+
 
         .fars-button:hover {
 
@@ -275,39 +463,13 @@
 
             color:
                 white;
+
         }
 
-        /* ==============================
-           STATUS
-        ============================== */
 
-        .status-box {
-
-            position: absolute;
-
-            bottom: 20px;
-            left: 15px;
-
-            z-index: 2500;
-
-            background:
-                rgba(255,255,255,0.95);
-
-            padding:
-                7px 12px;
-
-            border-radius: 8px;
-
-            font-size: 13px;
-
-            box-shadow:
-                0 2px 8px
-                rgba(0,0,0,0.20);
-        }
-
-        /* ==============================
+        /* =========================
            POPUP
-        ============================== */
+        ========================= */
 
         .leaflet-popup-content {
 
@@ -317,107 +479,144 @@
                 Arial,
                 sans-serif;
 
-            font-size: 15px;
+            font-size:
+                15px;
 
-            line-height: 1.8;
+            line-height:
+                1.8;
 
-            min-width: 230px;
+            min-width:
+                230px;
+
         }
+
 
         .popup-title {
 
-            font-size: 18px;
+            font-size:
+                18px;
 
-            font-weight: bold;
+            font-weight:
+                bold;
 
             color:
                 #e65100;
 
-            margin-bottom: 5px;
+            margin-bottom:
+                5px;
+
         }
+
 
         .popup-row {
 
             border-bottom:
                 1px solid #eee;
 
-            padding: 4px 0;
+            padding:
+                4px 0;
+
         }
 
-        /* ==============================
-           MOBILE
-        ============================== */
 
-        @media (max-width: 700px) {
+        /* =========================
+           MOBILE
+        ========================= */
+
+        @media (max-width:700px) {
 
             header {
-                height: 62px;
+
+                height:
+                    62px;
+
             }
+
 
             header h1 {
-                font-size: 18px;
+
+                font-size:
+                    18px;
+
             }
+
 
             header .subtitle {
-                font-size: 10px;
+
+                font-size:
+                    10px;
+
             }
 
+
             #map {
+
                 height:
                     calc(100vh - 62px);
+
             }
+
 
             .control-panel {
 
-                top: 72px;
-                right: 8px;
+                top:
+                    72px;
 
-                width: 190px;
+                right:
+                    8px;
 
-                padding: 10px;
+                width:
+                    190px;
+
+                padding:
+                    10px;
+
             }
+
 
             .legend {
 
-                top: 72px;
-                left: 8px;
+                top:
+                    72px;
 
-                width: 180px;
+                left:
+                    8px;
 
-                padding: 10px;
+                width:
+                    180px;
+
+                padding:
+                    10px;
+
             }
+
 
             .panel-title,
             .legend-title {
-                font-size: 14px;
+
+                font-size:
+                    14px;
+
             }
+
 
             .filter-row,
             .legend-row {
-                font-size: 12px;
+
+                font-size:
+                    12px;
+
             }
 
-            .fars-button {
-
-                right: 8px;
-
-                bottom: 20px;
-            }
-
-            .status-box {
-
-                left: 8px;
-
-                bottom: 20px;
-
-                font-size: 11px;
-            }
         }
 
     </style>
+
 </head>
 
+
 <body>
+
 
 <header>
 
@@ -436,9 +635,9 @@
 </header>
 
 
-<!-- =========================================
-     فیلترها
-========================================= -->
+<!-- =========================
+     FILTERS
+========================= -->
 
 <div class="control-panel">
 
@@ -446,8 +645,6 @@
         لایه‌های سامانه
     </div>
 
-
-    <!-- 1 -->
 
     <label class="filter-row">
 
@@ -462,8 +659,6 @@
     </label>
 
 
-    <!-- 2 -->
-
     <label class="filter-row">
 
         <input
@@ -476,8 +671,6 @@
     </label>
 
 
-    <!-- 3 -->
-
     <label class="filter-row">
 
         <input
@@ -489,8 +682,6 @@
 
     </label>
 
-
-    <!-- 4 -->
 
     <label class="filter-row">
 
@@ -507,9 +698,9 @@
 </div>
 
 
-<!-- =========================================
+<!-- =========================
      LEGEND
-========================================= -->
+========================= -->
 
 <div class="legend">
 
@@ -519,64 +710,42 @@
 
 
     <div class="legend-row">
-
         <span class="legend-color low"></span>
-
         کم — کمتر از 11.2
-
     </div>
 
 
     <div class="legend-row">
-
         <span class="legend-color moderate"></span>
-
         متوسط — 11.2 تا کمتر از 21.3
-
     </div>
 
 
     <div class="legend-row">
-
         <span class="legend-color high"></span>
-
         زیاد — 21.3 تا کمتر از 38
-
     </div>
 
 
     <div class="legend-row">
-
         <span class="legend-color very-high"></span>
-
         خیلی زیاد — 38 تا کمتر از 50
-
     </div>
 
 
     <div class="legend-row">
-
         <span class="legend-color severe"></span>
-
         شدید — 50 تا 70
-
     </div>
 
 
     <div class="legend-row">
-
         <span class="legend-color very-severe"></span>
-
         بسیار شدید — بیشتر از 70
-
     </div>
 
 </div>
 
-
-<!-- =========================================
-     BUTTON
-========================================= -->
 
 <button
     class="fars-button"
@@ -584,18 +753,6 @@
 >
     نمایش کل استان فارس
 </button>
-
-
-<!-- =========================================
-     STATUS
-========================================= -->
-
-<div
-    class="status-box"
-    id="statusBox"
->
-    در حال بارگذاری داده‌ها...
-</div>
 
 
 <div id="map"></div>
@@ -609,26 +766,30 @@
 <script>
 
 /* =========================================================
-   تنظیمات اصلی
+   تنظیمات
 ========================================================= */
 
 const VERSION =
-    "20260820-03";
+    "20260820-04";
+
 
 const FWI_DATE =
     "2026-08-21";
 
 
-const FARS_FILE =
-    "fars.geojson?v=" + VERSION;
+const FARS_URL =
+    "fars.geojson?v=" +
+    VERSION;
 
 
-const PROTECTED_FILE =
-    "protected_areas.geojson?v=" + VERSION;
+const PROTECTED_URL =
+    "protected_areas.geojson?v=" +
+    VERSION;
 
 
-const HUNTING_FILE =
-    "hunting_banned.geojson?v=" + VERSION;
+const HUNTING_URL =
+    "hunting_banned.geojson?v=" +
+    VERSION;
 
 
 /* =========================================================
@@ -636,20 +797,19 @@ const HUNTING_FILE =
 ========================================================= */
 
 const map =
-    L.map(
-        "map",
-        {
-            zoomControl: true,
+    L.map("map", {
 
-            maxBoundsViscosity: 1.0,
+        zoomControl:
+            true,
 
-            minZoom: 6
-        }
-    );
+        minZoom:
+            6
+
+    });
 
 
 /* =========================================================
-   BASE MAP
+   BASEMAP
 ========================================================= */
 
 const baseMap =
@@ -658,10 +818,13 @@ const baseMap =
         "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
 
         {
-            maxZoom: 14,
+
+            maxZoom:
+                14,
 
             attribution:
                 "&copy; OpenStreetMap contributors"
+
         }
 
     );
@@ -671,39 +834,7 @@ baseMap.addTo(map);
 
 
 /* =========================================================
-   PANES
-========================================================= */
-
-map.createPane("fwiPane");
-
-map.getPane(
-    "fwiPane"
-).style.zIndex = 350;
-
-
-map.createPane("protectedPane");
-
-map.getPane(
-    "protectedPane"
-).style.zIndex = 450;
-
-
-map.createPane("huntingPane");
-
-map.getPane(
-    "huntingPane"
-).style.zIndex = 460;
-
-
-map.createPane("farsPane");
-
-map.getPane(
-    "farsPane"
-).style.zIndex = 470;
-
-
-/* =========================================================
-   GLOBAL VARIABLES
+   VARIABLES
 ========================================================= */
 
 let farsLayer = null;
@@ -718,234 +849,408 @@ let farsBounds = null;
 
 
 /* =========================================================
-   STATUS
+   LOAD FARS
 ========================================================= */
 
-const statusBox =
-    document.getElementById(
-        "statusBox"
-    );
+fetch(FARS_URL)
 
+.then(
+    response => {
 
-function setStatus(text) {
+        if (!response.ok) {
 
-    statusBox.textContent =
-        text;
-}
-
-
-/* =========================================================
-   FIND FARS MASK FEATURE
-========================================================= */
-
-function getFarsMaskFeature(
-    geojson
-) {
-
-    if (
-        !geojson ||
-        !geojson.features ||
-        geojson.features.length === 0
-    ) {
-
-        throw new Error(
-            "fars.geojson خالی است."
-        );
-    }
-
-
-    /*
-     اگر فقط یک Feature داریم
-     همان را استفاده می‌کنیم.
-    */
-
-    if (
-        geojson.features.length === 1
-    ) {
-
-        return geojson.features[0];
-
-    }
-
-
-    /*
-     اگر چند Feature داریم،
-     آنها را به یک MultiPolygon
-     تبدیل می‌کنیم.
-    */
-
-    const polygons = [];
-
-
-    for (
-        const feature
-        of geojson.features
-    ) {
-
-        const geometry =
-            feature.geometry;
-
-
-        if (
-            geometry.type ===
-            "Polygon"
-        ) {
-
-            polygons.push(
-                geometry.coordinates
+            throw new Error(
+                "خطا در دریافت fars.geojson"
             );
 
         }
 
-        else if (
-            geometry.type ===
-            "MultiPolygon"
+        return response.json();
+
+    }
+)
+
+.then(
+    farsData => {
+
+
+        /* ==========================================
+           مرز فارس
+        ========================================== */
+
+        farsLayer =
+            L.geoJSON(
+
+                farsData,
+
+                {
+
+                    style: {
+
+                        color:
+                            "#222222",
+
+                        weight:
+                            3,
+
+                        fill:
+                            false,
+
+                        opacity:
+                            1
+
+                    }
+
+                }
+
+            );
+
+
+        farsLayer.addTo(map);
+
+
+        farsBounds =
+            farsLayer.getBounds();
+
+
+        if (
+            !farsBounds.isValid()
         ) {
 
-            for (
-                const polygon
-                of geometry.coordinates
-            ) {
+            throw new Error(
+                "مرز فارس معتبر نیست."
+            );
 
-                polygons.push(
-                    polygon
-                );
+        }
+
+
+        /* ==========================================
+           فقط فارس
+        ========================================== */
+
+        map.fitBounds(
+
+            farsBounds,
+
+            {
+
+                padding:
+                    [25,25]
 
             }
 
-        }
-
-    }
-
-
-    return turf.multiPolygon(
-        polygons
-    );
-}
-
-
-/* =========================================================
-   CLIP FEATURE TO FARS
-========================================================= */
-
-function clipFeatureToFars(
-    feature,
-    farsMask
-) {
-
-    try {
-
-        const result =
-            turf.intersect(
-
-                turf.featureCollection(
-                    [
-                        feature,
-                        farsMask
-                    ]
-                )
-
-            );
-
-
-        if (!result) {
-
-            return null;
-
-        }
-
-
-        /*
-         Properties را از
-         Feature اصلی حفظ می‌کنیم.
-        */
-
-        result.properties =
-            feature.properties || {};
-
-
-        return result;
-
-    }
-
-    catch (error) {
-
-        console.warn(
-            "Clip error:",
-            error
         );
 
-        return null;
 
-    }
+        map.setMaxBounds(
 
-}
+            farsBounds.pad(
+                0.02
+            )
 
-
-/* =========================================================
-   CLIP ENTIRE GEOJSON
-========================================================= */
-
-function clipGeoJSONToFars(
-    geojson,
-    farsMask
-) {
-
-    const output = {
-
-        type:
-            "FeatureCollection",
-
-        features:
-            []
-
-    };
+        );
 
 
-    if (
-        !geojson ||
-        !geojson.features
-    ) {
+        /* ==========================================
+           FWI CLIPPED
+        ========================================== */
 
-        return output;
+        fwiLayer =
+            L.tileLayer.wms.clipped(
 
-    }
+                "https://maps.effis.emergency.copernicus.eu/gwis",
 
+                {
 
-    for (
-        const feature
-        of geojson.features
-    ) {
+                    layers:
+                        "ecmwf.fwi",
 
-        if (
-            !feature.geometry
-        ) {
+                    format:
+                        "image/png",
 
-            continue;
+                    transparent:
+                        true,
 
-        }
+                    version:
+                        "1.1.1",
 
+                    time:
+                        FWI_DATE,
 
-        const clipped =
-            clipFeatureToFars(
-                feature,
-                farsMask
+                    opacity:
+                        0.68,
+
+                    attribution:
+                        "Copernicus / GWIS / ECMWF"
+
+                },
+
+                farsData
+
             );
 
 
-        if (clipped) {
+        fwiLayer.addTo(map);
 
-            output.features.push(
-                clipped
-            );
 
-        }
+        /* ==========================================
+           لایه چهارگانه
+        ========================================== */
+
+        fetch(PROTECTED_URL)
+
+        .then(
+            response => {
+
+                if (!response.ok) {
+
+                    throw new Error(
+                        "خطا در protected_areas.geojson"
+                    );
+
+                }
+
+                return response.json();
+
+            }
+        )
+
+        .then(
+            protectedData => {
+
+                const clippedFeatures =
+                    protectedData.features
+                    .map(
+                        feature => {
+
+                            try {
+
+                                return turf.intersect(
+
+                                    turf.featureCollection(
+
+                                        [
+
+                                            feature,
+
+                                            farsData.features[0]
+
+                                        ]
+
+                                    )
+
+                                );
+
+                            }
+
+                            catch(error) {
+
+                                return null;
+
+                            }
+
+                        }
+
+                    )
+                    .filter(
+                        feature => feature !== null
+                    );
+
+
+                protectedLayer =
+                    L.geoJSON(
+
+                        {
+
+                            type:
+                                "FeatureCollection",
+
+                            features:
+                                clippedFeatures
+
+                        },
+
+                        {
+
+                            style: {
+
+                                color:
+                                    "#0066cc",
+
+                                weight:
+                                    2,
+
+                                fillColor:
+                                    "#0088ff",
+
+                                fillOpacity:
+                                    0.15
+
+                            },
+
+                            onEachFeature:
+                                function(
+                                    feature,
+                                    layer
+                                ) {
+
+                                    layer.bindPopup(
+
+                                        createPopup(
+
+                                            feature.properties,
+
+                                            "مناطق چهارگانه"
+
+                                        )
+
+                                    );
+
+                                }
+
+                        }
+
+                    );
+
+            }
+
+        );
+
+
+        /* ==========================================
+           شکار ممنوع
+        ========================================== */
+
+        fetch(HUNTING_URL)
+
+        .then(
+            response => {
+
+                if (!response.ok) {
+
+                    throw new Error(
+                        "خطا در hunting_banned.geojson"
+                    );
+
+                }
+
+                return response.json();
+
+            }
+        )
+
+        .then(
+            huntingData => {
+
+                const clippedFeatures =
+                    huntingData.features
+                    .map(
+                        feature => {
+
+                            try {
+
+                                return turf.intersect(
+
+                                    turf.featureCollection(
+
+                                        [
+
+                                            feature,
+
+                                            farsData.features[0]
+
+                                        ]
+
+                                    )
+
+                                );
+
+                            }
+
+                            catch(error) {
+
+                                return null;
+
+                            }
+
+                        }
+
+                    )
+                    .filter(
+                        feature => feature !== null
+                    );
+
+
+                huntingLayer =
+                    L.geoJSON(
+
+                        {
+
+                            type:
+                                "FeatureCollection",
+
+                            features:
+                                clippedFeatures
+
+                        },
+
+                        {
+
+                            style: {
+
+                                color:
+                                    "#7b1fa2",
+
+                                weight:
+                                    2,
+
+                                fillColor:
+                                    "#9c27b0",
+
+                                fillOpacity:
+                                    0.15
+
+                            },
+
+                            onEachFeature:
+                                function(
+                                    feature,
+                                    layer
+                                ) {
+
+                                    layer.bindPopup(
+
+                                        createPopup(
+
+                                            feature.properties,
+
+                                            "مناطق شکار ممنوع"
+
+                                        )
+
+                                    );
+
+                                }
+
+                        }
+
+                    );
+
+            }
+
+        );
 
     }
 
+)
 
-    return output;
-}
+.catch(
+    error => {
+
+        console.error(error);
+
+    }
+);
 
 
 /* =========================================================
@@ -985,678 +1290,22 @@ function createPopup(
         <div>
 
             <div class="popup-title">
-
                 ${name}
-
             </div>
 
-
             <div class="popup-row">
-
-                <b>نام منطقه:</b>
+                <b>نام:</b>
                 ${name}
-
             </div>
 
-
             <div class="popup-row">
-
-                <b>نوع منطقه:</b>
+                <b>نوع:</b>
                 ${type}
-
-            </div>
-
-
-            <div class="popup-row">
-
-                <b>FWI:</b>
-                در مرحله بعد متصل می‌شود
-
-            </div>
-
-
-            <div class="popup-row">
-
-                <b>سطح خطر:</b>
-                در مرحله بعد محاسبه می‌شود
-
             </div>
 
         </div>
 
     `;
-}
-
-
-/* =========================================================
-   LOAD FARS
-========================================================= */
-
-fetch(
-    FARS_FILE
-)
-
-.then(
-    response => {
-
-        if (!response.ok) {
-
-            throw new Error(
-                "مرز فارس دریافت نشد."
-            );
-
-        }
-
-        return response.json();
-
-    }
-)
-
-.then(
-    farsData => {
-
-
-        /* -----------------------------------------
-           FARS BOUNDARY
-        ----------------------------------------- */
-
-        farsLayer =
-            L.geoJSON(
-
-                farsData,
-
-                {
-
-                    pane:
-                        "farsPane",
-
-                    style: {
-
-                        color:
-                            "#222",
-
-                        weight:
-                            3,
-
-                        opacity:
-                            1,
-
-                        fill:
-                            false
-
-                    }
-
-                }
-
-            );
-
-
-        farsLayer.addTo(map);
-
-
-        farsBounds =
-            farsLayer.getBounds();
-
-
-        if (
-            !farsBounds.isValid()
-        ) {
-
-            throw new Error(
-                "مرز فارس معتبر نیست."
-            );
-
-        }
-
-
-        /*
-        فقط فارس
-        */
-
-        map.fitBounds(
-
-            farsBounds,
-
-            {
-                padding:
-                    [25, 25]
-            }
-
-        );
-
-
-        /*
-        حرکت خارج از فارس محدود شود
-        */
-
-        map.setMaxBounds(
-
-            farsBounds.pad(
-                0.02
-            )
-
-        );
-
-
-        /* -----------------------------------------
-           FARS MASK
-        ----------------------------------------- */
-
-        const farsMask =
-            getFarsMaskFeature(
-                farsData
-            );
-
-
-        /* -----------------------------------------
-           FWI WMS
-        ----------------------------------------- */
-
-        fwiLayer =
-            L.tileLayer.wms(
-
-                "https://maps.effis.emergency.copernicus.eu/gwis",
-
-                {
-
-                    layers:
-                        "ecmwf.fwi",
-
-                    format:
-                        "image/png",
-
-                    transparent:
-                        true,
-
-                    version:
-                        "1.1.1",
-
-                    time:
-                        FWI_DATE,
-
-                    opacity:
-                        0.68,
-
-                    pane:
-                        "fwiPane",
-
-                    bounds:
-                        farsBounds,
-
-                    keepBuffer:
-                        0,
-
-                    updateWhenIdle:
-                        true,
-
-                    updateWhenZooming:
-                        false,
-
-                    attribution:
-                        "Copernicus / GWIS / ECMWF"
-
-                }
-
-            );
-
-
-        fwiLayer.addTo(map);
-
-
-        /* -----------------------------------------
-           MASK با یک Polygon سفید بیرونی
-        ----------------------------------------- */
-
-        const maskLayer =
-            L.geoJSON(
-
-                {
-                    type:
-                        "FeatureCollection",
-
-                    features:
-                        [
-
-                            turf.feature(
-                                turf.geometryCollection([
-                                ])
-                            )
-
-                        ]
-
-                }
-
-            );
-
-
-        /*
-         برای ماسک نمایشی،
-         یک مستطیل بزرگ + سوراخ فارس
-         با SVG ساخته می‌شود.
-        */
-
-        createVisualMask(
-            farsData
-        );
-
-
-        setStatus(
-            "استان فارس و لایه FWI بارگذاری شد"
-        );
-
-
-        /* -----------------------------------------
-           PROTECTED AREAS
-        ----------------------------------------- */
-
-        return Promise.all(
-
-            [
-
-                fetch(
-                    PROTECTED_FILE
-                )
-                .then(
-                    r => r.json()
-                ),
-
-                fetch(
-                    HUNTING_FILE
-                )
-                .then(
-                    r => r.json()
-                )
-
-            ]
-
-        ).then(
-
-            ([protectedData, huntingData]) => {
-
-                /* ================================
-                   چهارگانه
-                ================================= */
-
-                const clippedProtected =
-                    clipGeoJSONToFars(
-
-                        protectedData,
-
-                        farsMask
-
-                    );
-
-
-                protectedLayer =
-                    L.geoJSON(
-
-                        clippedProtected,
-
-                        {
-
-                            pane:
-                                "protectedPane",
-
-                            style: {
-
-                                color:
-                                    "#0066cc",
-
-                                weight:
-                                    2,
-
-                                fillColor:
-                                    "#0088ff",
-
-                                fillOpacity:
-                                    0.16
-
-                            },
-
-                            onEachFeature:
-                                function(
-                                    feature,
-                                    layer
-                                ) {
-
-                                    layer.bindPopup(
-
-                                        createPopup(
-
-                                            feature.properties,
-
-                                            "مناطق چهارگانه"
-
-                                        )
-
-                                    );
-
-                                }
-
-                        }
-
-                    );
-
-
-                /* ================================
-                   شکار ممنوع
-                ================================= */
-
-                const clippedHunting =
-                    clipGeoJSONToFars(
-
-                        huntingData,
-
-                        farsMask
-
-                    );
-
-
-                huntingLayer =
-                    L.geoJSON(
-
-                        clippedHunting,
-
-                        {
-
-                            pane:
-                                "huntingPane",
-
-                            style: {
-
-                                color:
-                                    "#8e24aa",
-
-                                weight:
-                                    2,
-
-                                fillColor:
-                                    "#ab47bc",
-
-                                fillOpacity:
-                                    0.16
-
-                            },
-
-                            onEachFeature:
-                                function(
-                                    feature,
-                                    layer
-                                ) {
-
-                                    layer.bindPopup(
-
-                                        createPopup(
-
-                                            feature.properties,
-
-                                            "مناطق شکار ممنوع"
-
-                                        )
-
-                                    );
-
-                                }
-
-                        }
-
-                    );
-
-
-                setStatus(
-                    "تمام لایه‌های مکانی داخل محدوده فارس تنظیم شدند"
-                );
-
-            }
-
-        );
-
-    }
-)
-
-.catch(
-    error => {
-
-        console.error(
-            error
-        );
-
-        setStatus(
-            "خطا در بارگذاری داده‌ها"
-        );
-
-    }
-);
-
-
-/* =========================================================
-   VISUAL MASK FOR FWI
-========================================================= */
-
-function createVisualMask(
-    farsData
-) {
-
-    /*
-     این ماسک فقط برای نمایش است.
-     داده عددی FWI را تغییر نمی‌دهد.
-    */
-
-    const maskPane =
-        map.createPane(
-            "fwiMaskPane"
-        );
-
-
-    maskPane.style.zIndex =
-        400;
-
-
-    maskPane.style.pointerEvents =
-        "none";
-
-
-    const svg =
-        document.createElementNS(
-            "http://www.w3.org/2000/svg",
-            "svg"
-        );
-
-
-    svg.style.position =
-        "absolute";
-
-    svg.style.left =
-        "0";
-
-    svg.style.top =
-        "0";
-
-    svg.style.width =
-        "100%";
-
-    svg.style.height =
-        "100%";
-
-    svg.style.overflow =
-        "visible";
-
-
-    maskPane.appendChild(
-        svg
-    );
-
-
-    const path =
-        document.createElementNS(
-            "http://www.w3.org/2000/svg",
-            "path"
-        );
-
-
-    path.setAttribute(
-        "fill",
-        "#f3f3f3"
-    );
-
-
-    path.setAttribute(
-        "fill-rule",
-        "evenodd"
-    );
-
-
-    svg.appendChild(
-        path
-    );
-
-
-    function updateMask() {
-
-        const mapSize =
-            map.getSize();
-
-
-        const worldPath =
-
-            `M 0 0
-             L ${mapSize.x} 0
-             L ${mapSize.x} ${mapSize.y}
-             L 0 ${mapSize.y}
-             Z `;
-
-
-        let farsPath = "";
-
-
-        for (
-            const feature
-            of farsData.features
-        ) {
-
-            const geometry =
-                feature.geometry;
-
-
-            if (
-                geometry.type ===
-                "Polygon"
-            ) {
-
-                for (
-                    const ring
-                    of geometry.coordinates
-                ) {
-
-                    farsPath +=
-                        ringToSvgPath(
-                            ring
-                        );
-
-                }
-
-            }
-
-            else if (
-                geometry.type ===
-                "MultiPolygon"
-            ) {
-
-                for (
-                    const polygon
-                    of geometry.coordinates
-                ) {
-
-                    for (
-                        const ring
-                        of polygon
-                    ) {
-
-                        farsPath +=
-                            ringToSvgPath(
-                                ring
-                            );
-
-                    }
-
-                }
-
-            }
-
-        }
-
-
-        path.setAttribute(
-            "d",
-            worldPath +
-            farsPath
-        );
-
-    }
-
-
-    function ringToSvgPath(
-        ring
-    ) {
-
-        let result = "";
-
-
-        ring.forEach(
-            (coordinate, index) => {
-
-                const lng =
-                    coordinate[0];
-
-                const lat =
-                    coordinate[1];
-
-
-                const point =
-                    map.latLngToLayerPoint(
-
-                        [
-                            lat,
-                            lng
-                        ]
-
-                    );
-
-
-                if (
-                    index === 0
-                ) {
-
-                    result +=
-                        `M ${point.x} ${point.y} `;
-
-                }
-
-                else {
-
-                    result +=
-                        `L ${point.x} ${point.y} `;
-
-                }
-
-            }
-        );
-
-
-        result += "Z ";
-
-        return result;
-
-    }
-
-
-    updateMask();
-
-
-    map.on(
-        "move zoom resize",
-        updateMask
-    );
 
 }
 
@@ -1666,9 +1315,7 @@ function createVisualMask(
 ========================================================= */
 
 document
-    .getElementById(
-        "fwiToggle"
-    )
+    .getElementById("fwiToggle")
     .addEventListener(
         "change",
         function() {
@@ -1680,9 +1327,7 @@ document
 
             if (this.checked) {
 
-                fwiLayer.addTo(
-                    map
-                );
+                fwiLayer.addTo(map);
 
             }
 
@@ -1703,9 +1348,7 @@ document
 ========================================================= */
 
 document
-    .getElementById(
-        "protectedToggle"
-    )
+    .getElementById("protectedToggle")
     .addEventListener(
         "change",
         function() {
@@ -1717,9 +1360,7 @@ document
 
             if (this.checked) {
 
-                protectedLayer.addTo(
-                    map
-                );
+                protectedLayer.addTo(map);
 
             }
 
@@ -1740,9 +1381,7 @@ document
 ========================================================= */
 
 document
-    .getElementById(
-        "huntingToggle"
-    )
+    .getElementById("huntingToggle")
     .addEventListener(
         "change",
         function() {
@@ -1754,9 +1393,7 @@ document
 
             if (this.checked) {
 
-                huntingLayer.addTo(
-                    map
-                );
+                huntingLayer.addTo(map);
 
             }
 
@@ -1777,9 +1414,7 @@ document
 ========================================================= */
 
 document
-    .getElementById(
-        "farsToggle"
-    )
+    .getElementById("farsToggle")
     .addEventListener(
         "change",
         function() {
@@ -1791,9 +1426,7 @@ document
 
             if (this.checked) {
 
-                farsLayer.addTo(
-                    map
-                );
+                farsLayer.addTo(map);
 
             }
 
@@ -1810,13 +1443,11 @@ document
 
 
 /* =========================================================
-   FARS BUTTON
+   SHOW FARS
 ========================================================= */
 
 document
-    .getElementById(
-        "farsButton"
-    )
+    .getElementById("farsButton")
     .addEventListener(
         "click",
         function() {
@@ -1826,26 +1457,18 @@ document
             }
 
 
-            const bounds =
-                farsLayer.getBounds();
+            map.fitBounds(
 
+                farsLayer.getBounds(),
 
-            if (
-                bounds.isValid()
-            ) {
+                {
 
-                map.fitBounds(
+                    padding:
+                        [25,25]
 
-                    bounds,
+                }
 
-                    {
-                        padding:
-                            [25, 25]
-                    }
-
-                );
-
-            }
+            );
 
         }
     );
