@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>سامانه پایش و پیش‌بینی خطر حریق استان فارس</title>
+
+    <!-- Leaflet -->
+    <link
+        rel="stylesheet"
+        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    />
+
+    <style>
+        @font-face {
+            font-family: "BNazanin";
+            src: local("B Nazanin");
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: "BNazanin", Tahoma, Arial, sans-serif;
+            background: #f4f4f4;
+            color: #222;
+        }
+
+        header {
+            height: 70px;
+            background: #f57c00;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            position: relative;
+            z-index: 1000;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 25px;
+            font-weight: bold;
+        }
+
+        .subtitle {
+            font-size: 14px;
+            margin-top: 3px;
+            opacity: 0.95;
+        }
+
+        .legend {
+            position: absolute;
+            top: 82px;
+            right: 15px;
+            z-index: 1000;
+            background: rgba(255,255,255,0.96);
+            padding: 12px 15px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            min-width: 210px;
+        }
+
+        .legend-title {
+            font-weight: bold;
+            margin-bottom: 8px;
+            font-size: 16px;
+        }
+
+        .legend-row {
+            display: flex;
+            align-items: center;
+            margin: 5px 0;
+            font-size: 14px;
+        }
+
+        .legend-color {
+            width: 25px;
+            height: 15px;
+            margin-left: 8px;
+            border-radius: 3px;
+            border: 1px solid #999;
+        }
+
+        .low {
+            background: #2ca25f;
+        }
+
+        .moderate {
+            background: #ffff00;
+        }
+
+        .high {
+            background: #ff9900;
+        }
+
+        .very-high {
+            background: #ff0000;
+        }
+
+        .severe {
+            background: #cc00cc;
+        }
+
+        .very-severe {
+            background: #7a001f;
+        }
+
+        #map {
+            width: 100%;
+            height: calc(100vh - 70px);
+        }
+
+        .info-panel {
+            position: absolute;
+            left: 15px;
+            top: 82px;
+            z-index: 1000;
+            background: rgba(255,255,255,0.96);
+            padding: 12px 15px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            min-width: 220px;
+            font-size: 14px;
+        }
+
+        .info-panel strong {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .source {
+            color: #555;
+            font-size: 12px;
+        }
+
+        .leaflet-popup-content {
+            font-family: "BNazanin", Tahoma, Arial, sans-serif;
+            font-size: 15px;
+            line-height: 1.8;
+        }
+
+        .fwi-value {
+            font-size: 22px;
+            font-weight: bold;
+            color: #d84315;
+        }
+
+        @media (max-width: 700px) {
+
+            header {
+                height: 62px;
+            }
+
+            header h1 {
+                font-size: 19px;
+            }
+
+            .subtitle {
+                font-size: 11px;
+            }
+
+            #map {
+                height: calc(100vh - 62px);
+            }
+
+            .legend {
+                top: 72px;
+                right: 8px;
+                min-width: 175px;
+                padding: 8px 10px;
+            }
+
+            .info-panel {
+                left: 8px;
+                top: 72px;
+                min-width: 180px;
+                padding: 8px 10px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<header>
+    <div>
+        <h1>سامانه پایش و پیش‌بینی خطر حریق استان فارس</h1>
+        <div class="subtitle">
+            بر پایه شاخص خطر حریق ECMWF Fire Weather Index
+        </div>
+    </div>
+</header>
+
+<div class="legend">
+
+    <div class="legend-title">
+        طبقات خطر حریق
+    </div>
+
+    <div class="legend-row">
+        <span class="legend-color low"></span>
+        کم — کمتر از 11.2
+    </div>
+
+    <div class="legend-row">
+        <span class="legend-color moderate"></span>
+        متوسط — 11.2 تا کمتر از 21.3
+    </div>
+
+    <div class="legend-row">
+        <span class="legend-color high"></span>
+        زیاد — 21.3 تا کمتر از 38
+    </div>
+
+    <div class="legend-row">
+        <span class="legend-color very-high"></span>
+        خیلی زیاد — 38 تا کمتر از 50
+    </div>
+
+    <div class="legend-row">
+        <span class="legend-color severe"></span>
+        شدید — 50 تا 70
+    </div>
+
+    <div class="legend-row">
+        <span class="legend-color very-severe"></span>
+        بسیار شدید — بیشتر از 70
+    </div>
+
+</div>
+
+<div class="info-panel">
+
+    <strong>داده خطر حریق</strong>
+
+    <div>
+        ECMWF / GWIS
+    </div>
+
+    <div>
+        تاریخ:
+        <b>2026-08-21</b>
+    </div>
+
+    <div class="source">
+        Fire Weather Index (FWI)
+    </div>
+
+</div>
+
+<div id="map"></div>
+
+<!-- Leaflet -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+
+    /*
+     * ==========================================
+     * ایجاد نقشه
+     * ==========================================
+     */
+
+    const map = L.map("map", {
+        zoomControl: true
+    });
+
+    /*
+     * مرکز استان فارس
+     */
+
+    map.setView(
+        [29.6, 52.5],
+        8
+    );
+
+    /*
+     * نقشه پایه
+     */
+
+    const baseMap = L.tileLayer(
+        "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+        {
+            attribution:
+                '&copy; OpenStreetMap contributors'
+        }
+    );
+
+    baseMap.addTo(map);
+
+    /*
+     * ==========================================
+     * سرویس رسمی GWIS / ECMWF FWI
+     * ==========================================
+     */
+
+    const fwiLayer = L.tileLayer.wms(
+        "https://maps.effis.emergency.copernicus.eu/gwis",
+        {
+            layers: "ecmwf.fwi",
+            format: "image/png",
+            transparent: true,
+            version: "1.1.1",
+            time: "2026-08-21",
+            opacity: 0.65,
+            attribution:
+                "Copernicus / GWIS / ECMWF"
+        }
+    );
+
+    /*
+     * نمایش لایه FWI
+     */
+
+    fwiLayer.addTo(map);
+
+    /*
+     * ==========================================
+     * نقطه آزمایشی شیراز
+     * ==========================================
+     */
+
+    const shirazPoint = L.marker(
+        [29.5918, 52.5837]
+    ).addTo(map);
+
+    shirazPoint.bindPopup(`
+        <div>
+            <b>نقطه آزمایشی شیراز</b>
+            <hr>
+
+            <div>
+                طول جغرافیایی:
+                52.5837
+            </div>
+
+            <div>
+                عرض جغرافیایی:
+                29.5918
+            </div>
+
+            <div style="margin-top:8px;">
+                <b>FWI:</b>
+                <span class="fwi-value">
+                    در حال Query...
+                </span>
+            </div>
+
+            <div class="source">
+                منبع:
+                GWIS / ECMWF
+            </div>
+        </div>
+    `);
+
+    /*
+     * باز شدن Popup هنگام بارگذاری
+     */
+
+    shirazPoint.openPopup();
+
+</script>
+
+</body>
+</html>
