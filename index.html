@@ -12,7 +12,6 @@
     >
 
     <style>
-
         @font-face {
             font-family: "BNazanin";
             src: local("B Nazanin");
@@ -30,6 +29,10 @@
             height: 100%;
             font-family: "BNazanin", Tahoma, Arial, sans-serif;
             background: #f4f4f4;
+        }
+
+        body {
+            overflow: hidden;
         }
 
         header {
@@ -241,7 +244,6 @@
                 bottom: 20px;
             }
         }
-
     </style>
 </head>
 
@@ -258,10 +260,6 @@
 </header>
 
 
-<!-- ==============================
-     پنل فیلترها
-================================ -->
-
 <div class="control-panel">
 
     <div class="panel-title">
@@ -269,57 +267,41 @@
     </div>
 
     <label class="filter-row">
-
         <input
             type="checkbox"
             id="fwiToggle"
             checked
         >
-
         نمایش خطر حریق FWI
-
     </label>
 
     <label class="filter-row">
-
         <input
             type="checkbox"
             id="protectedToggle"
         >
-
         مناطق چهارگانه
-
     </label>
 
     <label class="filter-row">
-
         <input
             type="checkbox"
             id="huntingToggle"
         >
-
         مناطق شکار ممنوع
-
     </label>
 
     <label class="filter-row">
-
         <input
             type="checkbox"
             id="farsToggle"
             checked
         >
-
         مرز استان فارس
-
     </label>
 
 </div>
 
-
-<!-- ==============================
-     راهنمای FWI
-================================ -->
 
 <div class="legend">
 
@@ -376,374 +358,217 @@
 
 <script>
 
-/*
-==================================================
-تنظیمات
-==================================================
-*/
+const CACHE_VERSION = "20260820-02";
 
 const FWI_DATE = "2026-08-21";
 
-const FARS_FILE = "fars.geojson";
+const FARS_FILE =
+    "fars.geojson?v=" + CACHE_VERSION;
 
-const PROTECTED_FILE = "protected_areas.geojson";
+const PROTECTED_FILE =
+    "protected_areas.geojson?v=" + CACHE_VERSION;
 
-const HUNTING_FILE = "hunting_banned.geojson";
+const HUNTING_FILE =
+    "hunting_banned.geojson?v=" + CACHE_VERSION;
 
-
-/*
-==================================================
-ایجاد نقشه
-==================================================
-*/
 
 const map = L.map("map", {
-
     zoomControl: true,
-
-    maxBoundsViscosity: 1.0
-
+    maxBoundsViscosity: 1.0,
+    minZoom: 6
 });
 
 
-/*
-==================================================
-نقشه پایه
-==================================================
-*/
-
 const baseMap = L.tileLayer(
-
     "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-
     {
-
         maxZoom: 14,
-
         attribution:
-            '&copy; OpenStreetMap contributors'
-
+            "&copy; OpenStreetMap contributors"
     }
-
 );
 
 baseMap.addTo(map);
 
 
-/*
-==================================================
-متغیر لایه‌ها
-==================================================
-*/
-
-let farsLayer = null;
-
-let protectedLayer = null;
-
-let huntingLayer = null;
-
-let fwiLayer = null;
-
-let fwiMask = null;
-
-let farsBounds = null;
-
-
-/*
-==================================================
-پنجره‌های Leaflet برای کنترل ترتیب لایه‌ها
-==================================================
-*/
+/* ==========================================
+   Paneها
+========================================== */
 
 map.createPane("fwiPane");
-
 map.getPane("fwiPane").style.zIndex = 350;
 
-
-map.createPane("fwiMaskPane");
-
-map.getPane("fwiMaskPane").style.zIndex = 400;
-
-map.getPane("fwiMaskPane").style.pointerEvents = "none";
-
+map.createPane("maskPane");
+map.getPane("maskPane").style.zIndex = 400;
+map.getPane("maskPane").style.pointerEvents = "none";
 
 map.createPane("protectedPane");
-
 map.getPane("protectedPane").style.zIndex = 450;
 
-
 map.createPane("huntingPane");
-
 map.getPane("huntingPane").style.zIndex = 460;
 
-
 map.createPane("farsPane");
-
 map.getPane("farsPane").style.zIndex = 470;
 
 
-/*
-==================================================
-استایل مرز فارس
-==================================================
-*/
+/* ==========================================
+   متغیرها
+========================================== */
+
+let farsLayer = null;
+let protectedLayer = null;
+let huntingLayer = null;
+let fwiLayer = null;
+let maskSvg = null;
+let maskPath = null;
+let farsBounds = null;
+
+
+/* ==========================================
+   سبک مرز فارس
+========================================== */
 
 const farsStyle = {
-
     color: "#222222",
-
     weight: 3,
-
     opacity: 1,
-
     fill: false,
-
     pane: "farsPane"
-
 };
 
 
-/*
-==================================================
-Popup
-==================================================
-*/
+/* ==========================================
+   Popup
+========================================== */
 
-function createPopup(
-
-    properties,
-
-    type
-
-) {
+function createPopup(properties, type) {
 
     properties = properties || {};
 
-
     const name =
-
         properties.name ||
-
         properties.NAME ||
-
         properties.Name ||
-
         properties.name_fa ||
-
         properties.NAME_FA ||
-
         properties.title ||
-
         properties.Title ||
-
         "نام منطقه ثبت نشده";
 
-
     return `
-
         <div>
-
             <div class="popup-title">
-
                 ${name}
-
             </div>
 
-
             <div class="popup-row">
-
                 <b>نوع منطقه:</b>
-
                 ${type}
-
             </div>
 
-
             <div class="popup-row">
-
                 <b>FWI:</b>
-
                 در حال اتصال به داده عددی
-
             </div>
-
 
             <div class="popup-row">
-
                 <b>سطح خطر:</b>
-
                 در حال محاسبه
-
             </div>
-
         </div>
-
     `;
-
 }
 
 
-/*
-==================================================
-استخراج حلقه‌های GeoJSON فارس
-==================================================
-*/
+/* ==========================================
+   گرفتن تمام رینگ‌های استان
+========================================== */
 
-function collectPolygonRings(
+function getRings(geometry) {
 
-    geometry,
-
-    result = []
-
-) {
+    const rings = [];
 
     if (!geometry) {
-
-        return result;
-
+        return rings;
     }
-
 
     if (geometry.type === "Polygon") {
 
-        geometry.coordinates.forEach(
-
-            ring => {
-
-                result.push(ring);
-
-            }
-
-        );
+        for (const ring of geometry.coordinates) {
+            rings.push(ring);
+        }
 
     }
 
+    else if (geometry.type === "MultiPolygon") {
 
-    else if (
-        geometry.type === "MultiPolygon"
-    ) {
+        for (const polygon of geometry.coordinates) {
 
-        geometry.coordinates.forEach(
-
-            polygon => {
-
-                polygon.forEach(
-
-                    ring => {
-
-                        result.push(ring);
-
-                    }
-
-                );
-
-            }
-
-        );
-
-    }
-
-
-    return result;
-
-}
-
-
-/*
-==================================================
-تبدیل مختصات GeoJSON به مختصات صفحه Leaflet
-==================================================
-*/
-
-function ringToPath(
-
-    ring
-
-) {
-
-    if (!ring || !ring.length) {
-
-        return "";
-
-    }
-
-
-    let path = "";
-
-
-    ring.forEach(
-
-        (coordinate, index) => {
-
-            const lat =
-                coordinate[1];
-
-            const lng =
-                coordinate[0];
-
-
-            const point =
-                map.latLngToContainerPoint(
-                    [lat, lng]
-                );
-
-
-            if (index === 0) {
-
-                path +=
-                    `M ${point.x} ${point.y} `;
-
-            }
-
-            else {
-
-                path +=
-                    `L ${point.x} ${point.y} `;
-
+            for (const ring of polygon) {
+                rings.push(ring);
             }
 
         }
+    }
 
-    );
-
-
-    path += "Z ";
-
-    return path;
-
+    return rings;
 }
 
 
-/*
-==================================================
-ساخت ماسک واقعی فارس
-==================================================
-*/
+/* ==========================================
+   تبدیل Ring به SVG Path
+   توجه: layerPoint استفاده می‌شود
+========================================== */
 
-function createFwiMask(
+function ringToLayerPath(ring) {
 
-    geojson
-
-) {
-
-    if (fwiMask) {
-
-        fwiMask.remove();
-
-        fwiMask = null;
-
+    if (!ring || ring.length === 0) {
+        return "";
     }
 
+    let d = "";
 
-    /*
-    ----------------------------------------------
-    ساخت پنجره SVG
-    ----------------------------------------------
-    */
+    ring.forEach((coord, index) => {
+
+        const lng = coord[0];
+        const lat = coord[1];
+
+        const point =
+            map.latLngToLayerPoint(
+                L.latLng(lat, lng)
+            );
+
+        if (index === 0) {
+
+            d +=
+                `M ${point.x} ${point.y} `;
+
+        } else {
+
+            d +=
+                `L ${point.x} ${point.y} `;
+
+        }
+
+    });
+
+    d += "Z ";
+
+    return d;
+}
+
+
+/* ==========================================
+   ساخت ماسک
+========================================== */
+
+function buildMask(geojson) {
 
     const pane =
-        map.getPane("fwiMaskPane");
+        map.getPane("maskPane");
 
+    pane.innerHTML = "";
 
     const svg =
         document.createElementNS(
@@ -751,30 +576,27 @@ function createFwiMask(
             "svg"
         );
 
+    svg.setAttribute(
+        "width",
+        "100%"
+    );
+
+    svg.setAttribute(
+        "height",
+        "100%"
+    );
 
     svg.style.position = "absolute";
-
-    svg.style.top = "0";
-
     svg.style.left = "0";
-
-    svg.style.width = "100%";
-
-    svg.style.height = "100%";
-
+    svg.style.top = "0";
+    svg.style.overflow = "visible";
     svg.style.pointerEvents = "none";
 
-
-    pane.innerHTML = "";
-
-    pane.appendChild(svg);
-
-
-    /*
-    ----------------------------------------------
-    ساخت Path
-    ----------------------------------------------
-    */
+    const group =
+        document.createElementNS(
+            "http://www.w3.org/2000/svg",
+            "g"
+        );
 
     const path =
         document.createElementNS(
@@ -785,15 +607,13 @@ function createFwiMask(
 
     path.setAttribute(
         "fill",
-        "rgba(255,255,255,1)"
+        "#f4f4f4"
     );
-
 
     path.setAttribute(
         "fill-rule",
         "evenodd"
     );
-
 
     path.setAttribute(
         "clip-rule",
@@ -801,59 +621,91 @@ function createFwiMask(
     );
 
 
-    svg.appendChild(path);
+    group.appendChild(path);
 
+    svg.appendChild(group);
 
-    /*
-    ----------------------------------------------
-    تابع به‌روزرسانی ماسک
-    ----------------------------------------------
-    */
+    pane.appendChild(svg);
+
+    maskSvg = svg;
+    maskPath = path;
+
 
     function updateMask() {
 
-        const size =
-            map.getSize();
+        if (!maskPath) {
+            return;
+        }
+
+        /*
+        نقشه تمام صفحه
+        */
+
+        const bounds =
+            map.getBounds();
+
+        const northWest =
+            map.latLngToLayerPoint(
+                bounds.getNorthWest()
+            );
+
+        const northEast =
+            map.latLngToLayerPoint(
+                bounds.getNorthEast()
+            );
+
+        const southEast =
+            map.latLngToLayerPoint(
+                bounds.getSouthEast()
+            );
+
+        const southWest =
+            map.latLngToLayerPoint(
+                bounds.getSouthWest()
+            );
 
 
-        const outerPath =
+        let d =
 
-            `M 0 0
-             L ${size.x} 0
-             L ${size.x} ${size.y}
-             L 0 ${size.y}
+            `M ${northWest.x} ${northWest.y}
+             L ${northEast.x} ${northEast.y}
+             L ${southEast.x} ${southEast.y}
+             L ${southWest.x} ${southWest.y}
              Z `;
 
 
-        let provincePath = "";
+        /*
+        سوراخ استان فارس
+        */
 
+        for (
+            const feature
+            of geojson.features
+        ) {
 
-        geojson.features.forEach(
+            const rings =
+                getRings(
+                    feature.geometry
+                );
 
-            feature => {
+            for (
+                const ring
+                of rings
+            ) {
 
-                provincePath +=
-                    collectPolygonRings(
-                        feature.geometry
-                    )
-                    .map(
-                        ringToPath
-                    )
-                    .join(" ");
+                d +=
+                    ringToLayerPath(
+                        ring
+                    );
 
             }
+        }
 
-        );
 
-
-        path.setAttribute(
-
+        maskPath.setAttribute(
             "d",
-
-            outerPath + provincePath
-
+            d
         );
-
     }
 
 
@@ -861,49 +713,26 @@ function createFwiMask(
 
 
     map.on(
-        "zoom move resize",
+        "move zoom resize",
         updateMask
     );
 
-
-    fwiMask = {
-
-        remove: function() {
-
-            map.off(
-                "zoom move resize",
-                updateMask
-            );
-
-            pane.innerHTML = "";
-
-        },
-
-        update: updateMask
-
-    };
-
+    return updateMask;
 }
 
 
-/*
-==================================================
-بارگذاری مرز استان فارس
-==================================================
-*/
+/* ==========================================
+   بارگذاری مرز فارس
+========================================== */
 
-fetch(
-    FARS_FILE + "?v=20260820"
-)
+fetch(FARS_FILE)
 
     .then(response => {
 
         if (!response.ok) {
-
             throw new Error(
-                "خطا در دریافت fars.geojson"
+                "fars.geojson دریافت نشد."
             );
-
         }
 
         return response.json();
@@ -912,92 +741,60 @@ fetch(
 
     .then(data => {
 
-        /*
-        ------------------------------------------
-        لایه مرز فارس
-        ------------------------------------------
-        */
-
-        farsLayer = L.geoJSON(
-
-            data,
-
-            {
-
-                style: farsStyle
-
-            }
-
-        );
+        farsLayer =
+            L.geoJSON(
+                data,
+                {
+                    style:
+                        farsStyle
+                }
+            );
 
 
         farsLayer.addTo(map);
 
-
-        /*
-        ------------------------------------------
-        محدوده استان
-        ------------------------------------------
-        */
 
         farsBounds =
             farsLayer.getBounds();
 
 
         if (!farsBounds.isValid()) {
-
             throw new Error(
-                "fars.geojson معتبر نیست."
+                "محدوده فارس معتبر نیست."
             );
-
         }
 
 
         /*
-        ------------------------------------------
-        نمایش کل فارس
-        ------------------------------------------
+        فقط فارس
         */
 
         map.fitBounds(
-
             farsBounds,
-
             {
-
-                padding: [25, 25]
-
+                padding:
+                    [25, 25]
             }
-
         );
 
 
         /*
-        ------------------------------------------
-        محدود کردن حرکت نقشه
-        ------------------------------------------
+        جلوگیری از خروج زیاد
         */
 
         map.setMaxBounds(
-
-            farsBounds.pad(0.05)
-
+            farsBounds.pad(0.025)
         );
 
 
         /*
-        ------------------------------------------
-        ایجاد FWI
-        ------------------------------------------
+        FWI فقط در BBOX فارس
         */
 
         fwiLayer =
             L.tileLayer.wms(
-
                 "https://maps.effis.emergency.copernicus.eu/gwis",
-
                 {
-
                     layers:
                         "ecmwf.fwi",
 
@@ -1033,60 +830,42 @@ fetch(
 
                     attribution:
                         "Copernicus / GWIS / ECMWF"
-
                 }
-
             );
 
-
-        /*
-        ------------------------------------------
-        نمایش FWI
-        ------------------------------------------
-        */
 
         fwiLayer.addTo(map);
 
 
         /*
-        ------------------------------------------
-        ساخت ماسک واقعی
-        ------------------------------------------
+        ماسک دقیق فارس
         */
 
-        createFwiMask(data);
+        buildMask(data);
 
     })
 
     .catch(error => {
 
         console.error(
-
-            "Fars boundary error:",
-
             error
-
         );
 
     });
 
 
-/*
-==================================================
-مناطق چهارگانه
-==================================================
-*/
+/* ==========================================
+   مناطق چهارگانه
+========================================== */
 
-fetch(
-    PROTECTED_FILE + "?v=20260820"
-)
+fetch(PROTECTED_FILE)
 
     .then(response => {
 
         if (!response.ok) {
 
             throw new Error(
-                "خطا در دریافت protected_areas.geojson"
+                "protected_areas.geojson دریافت نشد."
             );
 
         }
@@ -1099,9 +878,7 @@ fetch(
 
         protectedLayer =
             L.geoJSON(
-
                 data,
-
                 {
 
                     pane:
@@ -1120,65 +897,46 @@ fetch(
 
                         fillOpacity:
                             0.12
-
                     },
 
                     onEachFeature:
-
                         function(
                             feature,
                             layer
                         ) {
 
                             layer.bindPopup(
-
                                 createPopup(
-
                                     feature.properties,
-
                                     "منطقه چهارگانه"
-
                                 )
-
                             );
 
                         }
-
                 }
-
             );
 
     })
 
     .catch(error => {
 
-        console.error(
-
-            "Protected areas error:",
-
-            error
-
-        );
+        console.error(error);
 
     });
 
 
-/*
-==================================================
-مناطق شکار ممنوع
-==================================================
-*/
+/* ==========================================
+   مناطق شکار ممنوع
+========================================== */
 
-fetch(
-    HUNTING_FILE + "?v=20260820"
-)
+fetch(HUNTING_FILE)
 
     .then(response => {
 
         if (!response.ok) {
 
             throw new Error(
-                "خطا در دریافت hunting_banned.geojson"
+                "hunting_banned.geojson دریافت نشد."
             );
 
         }
@@ -1191,9 +949,7 @@ fetch(
 
         huntingLayer =
             L.geoJSON(
-
                 data,
-
                 {
 
                     pane:
@@ -1212,131 +968,97 @@ fetch(
 
                         fillOpacity:
                             0.12
-
                     },
 
                     onEachFeature:
-
                         function(
                             feature,
                             layer
                         ) {
 
                             layer.bindPopup(
-
                                 createPopup(
-
                                     feature.properties,
-
                                     "منطقه شکار ممنوع"
-
                                 )
-
                             );
 
                         }
-
                 }
-
             );
 
     })
 
     .catch(error => {
 
-        console.error(
-
-            "Hunting areas error:",
-
-            error
-
-        );
+        console.error(error);
 
     });
 
 
-/*
-==================================================
-فیلتر FWI
-==================================================
-*/
+/* ==========================================
+   FWI Toggle
+========================================== */
 
 document
-
-    .getElementById(
-        "fwiToggle"
-    )
-
+    .getElementById("fwiToggle")
     .addEventListener(
-
         "change",
-
         function() {
 
             if (!fwiLayer) {
-
                 return;
-
             }
-
 
             if (this.checked) {
 
                 fwiLayer.addTo(map);
 
-                if (fwiMask) {
-
-                    fwiMask.update();
-
+                if (maskSvg) {
+                    map.getPane(
+                        "maskPane"
+                    ).style.display =
+                        "block";
                 }
 
-            }
-
-            else {
+            } else {
 
                 map.removeLayer(
                     fwiLayer
                 );
 
+                if (maskSvg) {
+                    map.getPane(
+                        "maskPane"
+                    ).style.display =
+                        "none";
+                }
+
             }
 
         }
-
     );
 
 
-/*
-==================================================
-فیلتر مناطق چهارگانه
-==================================================
-*/
+/* ==========================================
+   Protected Toggle
+========================================== */
 
 document
-
-    .getElementById(
-        "protectedToggle"
-    )
-
+    .getElementById("protectedToggle")
     .addEventListener(
-
         "change",
-
         function() {
 
             if (!protectedLayer) {
-
                 return;
-
             }
-
 
             if (this.checked) {
 
                 protectedLayer.addTo(map);
 
-            }
-
-            else {
+            } else {
 
                 map.removeLayer(
                     protectedLayer
@@ -1345,42 +1067,28 @@ document
             }
 
         }
-
     );
 
 
-/*
-==================================================
-فیلتر شکار ممنوع
-==================================================
-*/
+/* ==========================================
+   Hunting Toggle
+========================================== */
 
 document
-
-    .getElementById(
-        "huntingToggle"
-    )
-
+    .getElementById("huntingToggle")
     .addEventListener(
-
         "change",
-
         function() {
 
             if (!huntingLayer) {
-
                 return;
-
             }
-
 
             if (this.checked) {
 
                 huntingLayer.addTo(map);
 
-            }
-
-            else {
+            } else {
 
                 map.removeLayer(
                     huntingLayer
@@ -1389,42 +1097,28 @@ document
             }
 
         }
-
     );
 
 
-/*
-==================================================
-فیلتر مرز فارس
-==================================================
-*/
+/* ==========================================
+   Fars Boundary Toggle
+========================================== */
 
 document
-
-    .getElementById(
-        "farsToggle"
-    )
-
+    .getElementById("farsToggle")
     .addEventListener(
-
         "change",
-
         function() {
 
             if (!farsLayer) {
-
                 return;
-
             }
-
 
             if (this.checked) {
 
                 farsLayer.addTo(map);
 
-            }
-
-            else {
+            } else {
 
                 map.removeLayer(
                     farsLayer
@@ -1433,58 +1127,39 @@ document
             }
 
         }
-
     );
 
 
-/*
-==================================================
-دکمه نمایش کل فارس
-==================================================
-*/
+/* ==========================================
+   دکمه کل فارس
+========================================== */
 
 document
-
-    .getElementById(
-        "farsButton"
-    )
-
+    .getElementById("farsButton")
     .addEventListener(
-
         "click",
-
         function() {
 
             if (!farsLayer) {
-
                 return;
-
             }
-
 
             const bounds =
                 farsLayer.getBounds();
 
-
             if (bounds.isValid()) {
 
                 map.fitBounds(
-
                     bounds,
-
                     {
-
                         padding:
                             [25, 25]
-
                     }
-
                 );
 
             }
 
         }
-
     );
 
 </script>
