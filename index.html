@@ -6,11 +6,10 @@
 
     <title>سامانه پایش و پیش‌بینی خطر حریق استان فارس</title>
 
-    <!-- Leaflet -->
     <link
         rel="stylesheet"
         href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-    />
+    >
 
     <style>
         @font-face {
@@ -22,11 +21,14 @@
             box-sizing: border-box;
         }
 
+        html,
         body {
             margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
             font-family: "BNazanin", Tahoma, Arial, sans-serif;
             background: #f4f4f4;
-            color: #222;
         }
 
         header {
@@ -37,9 +39,9 @@
             align-items: center;
             justify-content: center;
             text-align: center;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
             position: relative;
-            z-index: 1000;
+            z-index: 2000;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.25);
         }
 
         header h1 {
@@ -48,40 +50,89 @@
             font-weight: bold;
         }
 
-        .subtitle {
-            font-size: 14px;
+        header .subtitle {
             margin-top: 3px;
-            opacity: 0.95;
+            font-size: 14px;
         }
+
+        #map {
+            width: 100%;
+            height: calc(100vh - 70px);
+        }
+
+        /* -------------------------
+           پنل کنترل
+        ------------------------- */
+
+        .control-panel {
+            position: absolute;
+            top: 85px;
+            right: 15px;
+            z-index: 1500;
+            width: 245px;
+            background: rgba(255,255,255,0.97);
+            border-radius: 12px;
+            padding: 14px;
+            box-shadow: 0 3px 14px rgba(0,0,0,0.25);
+        }
+
+        .panel-title {
+            font-size: 17px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 8px;
+        }
+
+        .filter-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 9px 0;
+            font-size: 15px;
+            cursor: pointer;
+        }
+
+        .filter-row input {
+            width: 17px;
+            height: 17px;
+            cursor: pointer;
+        }
+
+        /* -------------------------
+           راهنمای FWI
+        ------------------------- */
 
         .legend {
             position: absolute;
-            top: 82px;
-            right: 15px;
-            z-index: 1000;
-            background: rgba(255,255,255,0.96);
-            padding: 12px 15px;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-            min-width: 210px;
+            left: 15px;
+            top: 85px;
+            z-index: 1500;
+            background: rgba(255,255,255,0.97);
+            border-radius: 12px;
+            padding: 13px;
+            width: 230px;
+            box-shadow: 0 3px 14px rgba(0,0,0,0.25);
         }
 
         .legend-title {
             font-weight: bold;
-            margin-bottom: 8px;
-            font-size: 16px;
+            font-size: 17px;
+            margin-bottom: 9px;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 7px;
         }
 
         .legend-row {
             display: flex;
             align-items: center;
-            margin: 5px 0;
+            margin: 6px 0;
             font-size: 14px;
         }
 
         .legend-color {
-            width: 25px;
-            height: 15px;
+            width: 27px;
+            height: 16px;
             margin-left: 8px;
             border-radius: 3px;
             border: 1px solid #999;
@@ -111,45 +162,56 @@
             background: #7a001f;
         }
 
-        #map {
-            width: 100%;
-            height: calc(100vh - 70px);
-        }
+        /* -------------------------
+           دکمه فارس
+        ------------------------- */
 
-        .info-panel {
+        .fars-button {
             position: absolute;
-            left: 15px;
-            top: 82px;
-            z-index: 1000;
-            background: rgba(255,255,255,0.96);
-            padding: 12px 15px;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-            min-width: 220px;
+            bottom: 25px;
+            right: 15px;
+            z-index: 1500;
+            border: none;
+            background: white;
+            padding: 9px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: inherit;
             font-size: 14px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.25);
         }
 
-        .info-panel strong {
-            display: block;
-            margin-bottom: 5px;
+        .fars-button:hover {
+            background: #f57c00;
+            color: white;
         }
 
-        .source {
-            color: #555;
-            font-size: 12px;
-        }
+        /* -------------------------
+           Popup
+        ------------------------- */
 
         .leaflet-popup-content {
             font-family: "BNazanin", Tahoma, Arial, sans-serif;
             font-size: 15px;
             line-height: 1.8;
+            min-width: 220px;
         }
 
-        .fwi-value {
-            font-size: 22px;
+        .popup-title {
+            font-size: 18px;
             font-weight: bold;
-            color: #d84315;
+            color: #e65100;
+            margin-bottom: 5px;
         }
+
+        .popup-row {
+            border-bottom: 1px solid #eee;
+            padding: 3px 0;
+        }
+
+        /* -------------------------
+           موبایل
+        ------------------------- */
 
         @media (max-width: 700px) {
 
@@ -158,29 +220,44 @@
             }
 
             header h1 {
-                font-size: 19px;
+                font-size: 18px;
             }
 
-            .subtitle {
-                font-size: 11px;
+            header .subtitle {
+                font-size: 10px;
             }
 
             #map {
                 height: calc(100vh - 62px);
             }
 
-            .legend {
+            .control-panel {
                 top: 72px;
                 right: 8px;
-                min-width: 175px;
-                padding: 8px 10px;
+                width: 190px;
+                padding: 10px;
             }
 
-            .info-panel {
-                left: 8px;
+            .legend {
                 top: 72px;
-                min-width: 180px;
-                padding: 8px 10px;
+                left: 8px;
+                width: 180px;
+                padding: 10px;
+            }
+
+            .panel-title,
+            .legend-title {
+                font-size: 14px;
+            }
+
+            .filter-row,
+            .legend-row {
+                font-size: 12px;
+            }
+
+            .fars-button {
+                right: 8px;
+                bottom: 20px;
             }
         }
     </style>
@@ -191,16 +268,63 @@
 <header>
     <div>
         <h1>سامانه پایش و پیش‌بینی خطر حریق استان فارس</h1>
+
         <div class="subtitle">
-            بر پایه شاخص خطر حریق ECMWF Fire Weather Index
+            ECMWF Fire Weather Index — GWIS
         </div>
     </div>
 </header>
 
+<!-- کنترل فیلترها -->
+
+<div class="control-panel">
+
+    <div class="panel-title">
+        لایه‌های مکانی
+    </div>
+
+    <label class="filter-row">
+        <input
+            type="checkbox"
+            id="fwiToggle"
+            checked
+        >
+        نمایش خطر حریق FWI
+    </label>
+
+    <label class="filter-row">
+        <input
+            type="checkbox"
+            id="protectedToggle"
+        >
+        مناطق چهارگانه
+    </label>
+
+    <label class="filter-row">
+        <input
+            type="checkbox"
+            id="huntingToggle"
+        >
+        مناطق شکار ممنوع
+    </label>
+
+    <label class="filter-row">
+        <input
+            type="checkbox"
+            id="farsToggle"
+            checked
+        >
+        مرز استان فارس
+    </label>
+
+</div>
+
+<!-- راهنمای رنگ -->
+
 <div class="legend">
 
     <div class="legend-title">
-        طبقات خطر حریق
+        طبقات خطر حریق FWI
     </div>
 
     <div class="legend-row">
@@ -235,54 +359,51 @@
 
 </div>
 
-<div class="info-panel">
-
-    <strong>داده خطر حریق</strong>
-
-    <div>
-        ECMWF / GWIS
-    </div>
-
-    <div>
-        تاریخ:
-        <b>2026-08-21</b>
-    </div>
-
-    <div class="source">
-        Fire Weather Index (FWI)
-    </div>
-
-</div>
+<button
+    class="fars-button"
+    id="farsButton"
+>
+    نمایش کل استان فارس
+</button>
 
 <div id="map"></div>
 
-<!-- Leaflet -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <script>
 
     /*
-     * ==========================================
-     * ایجاد نقشه
-     * ==========================================
-     */
+     ==================================================
+     تنظیمات اصلی
+     ==================================================
+    */
+
+    const FWI_DATE = "2026-08-21";
+
+    const FARS_FILE = "fars.geojson";
+    const PROTECTED_FILE = "protected_areas.geojson";
+    const HUNTING_FILE = "hunting_banned.geojson";
+
+    /*
+     ==================================================
+     ایجاد نقشه
+     ==================================================
+    */
 
     const map = L.map("map", {
         zoomControl: true
     });
 
-    /*
-     * مرکز استان فارس
-     */
-
     map.setView(
         [29.6, 52.5],
-        8
+        7
     );
 
     /*
-     * نقشه پایه
-     */
+     ==================================================
+     نقشه پایه
+     ==================================================
+    */
 
     const baseMap = L.tileLayer(
         "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
@@ -295,10 +416,10 @@
     baseMap.addTo(map);
 
     /*
-     * ==========================================
-     * سرویس رسمی GWIS / ECMWF FWI
-     * ==========================================
-     */
+     ==================================================
+     لایه FWI
+     ==================================================
+    */
 
     const fwiLayer = L.tileLayer.wms(
         "https://maps.effis.emergency.copernicus.eu/gwis",
@@ -307,63 +428,433 @@
             format: "image/png",
             transparent: true,
             version: "1.1.1",
-            time: "2026-08-21",
-            opacity: 0.65,
+            time: FWI_DATE,
+            opacity: 0.68,
             attribution:
                 "Copernicus / GWIS / ECMWF"
         }
     );
 
-    /*
-     * نمایش لایه FWI
-     */
-
     fwiLayer.addTo(map);
 
     /*
-     * ==========================================
-     * نقطه آزمایشی شیراز
-     * ==========================================
-     */
+     ==================================================
+     استایل مرز فارس
+     ==================================================
+    */
 
-    const shirazPoint = L.marker(
-        [29.5918, 52.5837]
-    ).addTo(map);
-
-    shirazPoint.bindPopup(`
-        <div>
-            <b>نقطه آزمایشی شیراز</b>
-            <hr>
-
-            <div>
-                طول جغرافیایی:
-                52.5837
-            </div>
-
-            <div>
-                عرض جغرافیایی:
-                29.5918
-            </div>
-
-            <div style="margin-top:8px;">
-                <b>FWI:</b>
-                <span class="fwi-value">
-                    در حال Query...
-                </span>
-            </div>
-
-            <div class="source">
-                منبع:
-                GWIS / ECMWF
-            </div>
-        </div>
-    `);
+    const farsStyle = {
+        color: "#222",
+        weight: 3,
+        fill: false,
+        opacity: 1
+    };
 
     /*
-     * باز شدن Popup هنگام بارگذاری
-     */
+     ==================================================
+     لایه مرز فارس
+     ==================================================
+    */
 
-    shirazPoint.openPopup();
+    let farsLayer = null;
+
+    /*
+     ==================================================
+     لایه مناطق چهارگانه
+     ==================================================
+    */
+
+    let protectedLayer = null;
+
+    /*
+     ==================================================
+     لایه شکار ممنوع
+     ==================================================
+    */
+
+    let huntingLayer = null;
+
+    /*
+     ==================================================
+     ساخت Popup برای مناطق
+     ==================================================
+    */
+
+    function createPopup(properties, type) {
+
+        properties = properties || {};
+
+        /*
+         * چون هنوز ساختار دقیق نام فیلدهای GeoJSON
+         * را وارد منطق سامانه نکرده‌ایم، چند نام رایج
+         * بررسی می‌شود.
+         */
+
+        const name =
+            properties.name ||
+            properties.NAME ||
+            properties.Name ||
+            properties.name_fa ||
+            properties.NAME_FA ||
+            properties.title ||
+            properties.Title ||
+            "نام منطقه ثبت نشده";
+
+        return `
+            <div>
+
+                <div class="popup-title">
+                    ${name}
+                </div>
+
+                <div class="popup-row">
+                    <b>نوع منطقه:</b>
+                    ${type}
+                </div>
+
+                <div class="popup-row">
+                    <b>FWI:</b>
+                    در حال اتصال به داده عددی
+                </div>
+
+                <div class="popup-row">
+                    <b>سطح خطر:</b>
+                    در حال محاسبه
+                </div>
+
+            </div>
+        `;
+    }
+
+    /*
+     ==================================================
+     بارگذاری مرز فارس
+     ==================================================
+    */
+
+    fetch(FARS_FILE)
+        .then(response => {
+
+            if (!response.ok) {
+                throw new Error(
+                    "خطا در دریافت fars.geojson"
+                );
+            }
+
+            return response.json();
+        })
+        .then(data => {
+
+            farsLayer = L.geoJSON(
+                data,
+                {
+                    style: farsStyle
+                }
+            );
+
+            farsLayer.addTo(map);
+
+            /*
+             * تنظیم نمای نقشه بر اساس مرز واقعی فارس
+             */
+
+            const bounds = farsLayer.getBounds();
+
+            if (bounds.isValid()) {
+                map.fitBounds(
+                    bounds,
+                    {
+                        padding: [20, 20]
+                    }
+                );
+            }
+
+        })
+        .catch(error => {
+
+            console.error(
+                "Fars boundary error:",
+                error
+            );
+
+        });
+
+    /*
+     ==================================================
+     بارگذاری مناطق چهارگانه
+     ==================================================
+    */
+
+    fetch(PROTECTED_FILE)
+        .then(response => {
+
+            if (!response.ok) {
+                throw new Error(
+                    "خطا در دریافت protected_areas.geojson"
+                );
+            }
+
+            return response.json();
+        })
+        .then(data => {
+
+            protectedLayer = L.geoJSON(
+                data,
+                {
+
+                    style: {
+                        color: "#0066cc",
+                        weight: 2,
+                        fillColor: "#0088ff",
+                        fillOpacity: 0.12
+                    },
+
+                    onEachFeature:
+                        function(
+                            feature,
+                            layer
+                        ) {
+
+                            layer.bindPopup(
+                                createPopup(
+                                    feature.properties,
+                                    "منطقه چهارگانه"
+                                )
+                            );
+
+                        }
+
+                }
+            );
+
+        })
+        .catch(error => {
+
+            console.error(
+                "Protected areas error:",
+                error
+            );
+
+        });
+
+    /*
+     ==================================================
+     بارگذاری مناطق شکار ممنوع
+     ==================================================
+    */
+
+    fetch(HUNTING_FILE)
+        .then(response => {
+
+            if (!response.ok) {
+                throw new Error(
+                    "خطا در دریافت hunting_banned.geojson"
+                );
+            }
+
+            return response.json();
+        })
+        .then(data => {
+
+            huntingLayer = L.geoJSON(
+                data,
+                {
+
+                    style: {
+                        color: "#7b1fa2",
+                        weight: 2,
+                        fillColor: "#9c27b0",
+                        fillOpacity: 0.12
+                    },
+
+                    onEachFeature:
+                        function(
+                            feature,
+                            layer
+                        ) {
+
+                            layer.bindPopup(
+                                createPopup(
+                                    feature.properties,
+                                    "منطقه شکار ممنوع"
+                                )
+                            );
+
+                        }
+
+                }
+            );
+
+        })
+        .catch(error => {
+
+            console.error(
+                "Hunting areas error:",
+                error
+            );
+
+        });
+
+    /*
+     ==================================================
+     فیلتر FWI
+     ==================================================
+    */
+
+    document
+        .getElementById("fwiToggle")
+        .addEventListener(
+            "change",
+            function() {
+
+                if (this.checked) {
+
+                    if (!map.hasLayer(fwiLayer)) {
+                        fwiLayer.addTo(map);
+                    }
+
+                } else {
+
+                    if (map.hasLayer(fwiLayer)) {
+                        map.removeLayer(fwiLayer);
+                    }
+
+                }
+
+            }
+        );
+
+    /*
+     ==================================================
+     فیلتر مناطق چهارگانه
+     ==================================================
+    */
+
+    document
+        .getElementById("protectedToggle")
+        .addEventListener(
+            "change",
+            function() {
+
+                if (!protectedLayer) {
+                    return;
+                }
+
+                if (this.checked) {
+
+                    if (!map.hasLayer(protectedLayer)) {
+                        protectedLayer.addTo(map);
+                    }
+
+                } else {
+
+                    if (map.hasLayer(protectedLayer)) {
+                        map.removeLayer(protectedLayer);
+                    }
+
+                }
+
+            }
+        );
+
+    /*
+     ==================================================
+     فیلتر شکار ممنوع
+     ==================================================
+    */
+
+    document
+        .getElementById("huntingToggle")
+        .addEventListener(
+            "change",
+            function() {
+
+                if (!huntingLayer) {
+                    return;
+                }
+
+                if (this.checked) {
+
+                    if (!map.hasLayer(huntingLayer)) {
+                        huntingLayer.addTo(map);
+                    }
+
+                } else {
+
+                    if (map.hasLayer(huntingLayer)) {
+                        map.removeLayer(huntingLayer);
+                    }
+
+                }
+
+            }
+        );
+
+    /*
+     ==================================================
+     فیلتر مرز فارس
+     ==================================================
+    */
+
+    document
+        .getElementById("farsToggle")
+        .addEventListener(
+            "change",
+            function() {
+
+                if (!farsLayer) {
+                    return;
+                }
+
+                if (this.checked) {
+
+                    if (!map.hasLayer(farsLayer)) {
+                        farsLayer.addTo(map);
+                    }
+
+                } else {
+
+                    if (map.hasLayer(farsLayer)) {
+                        map.removeLayer(farsLayer);
+                    }
+
+                }
+
+            }
+        );
+
+    /*
+     ==================================================
+     دکمه نمایش کل فارس
+     ==================================================
+    */
+
+    document
+        .getElementById("farsButton")
+        .addEventListener(
+            "click",
+            function() {
+
+                if (!farsLayer) {
+                    return;
+                }
+
+                const bounds =
+                    farsLayer.getBounds();
+
+                if (bounds.isValid()) {
+
+                    map.fitBounds(
+                        bounds,
+                        {
+                            padding: [20, 20]
+                        }
+                    );
+
+                }
+
+            }
+        );
 
 </script>
 
